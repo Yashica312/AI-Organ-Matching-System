@@ -65,10 +65,17 @@ def build_pipeline() -> Pipeline:
     )
 
 
-def train_model(kidney_df: pd.DataFrame, test_size: float = 0.2):
-    X = kidney_df[MODEL_FEATURES].copy()
-    y = kidney_df[TARGET_COLUMN].copy()
+def train_model(df: pd.DataFrame, test_size: float = 0.2):
+    X = df[MODEL_FEATURES].copy()
+    y = df[TARGET_COLUMN].copy()
 
+    # 🚨 HANDLE SMALL DATA
+    if len(df) < 5:
+        pipeline = build_pipeline()
+        pipeline.fit(X, y)
+        return pipeline
+
+    # Normal case
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,

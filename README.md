@@ -9,7 +9,7 @@ The current implementation focuses on organ matching features such as donor age,
 ## Features
 
 - Streamlit dashboard for interactive donor-recipient matching
-- Login flow backed by SQLite
+- Secure login and registration flow backed by SQLite
 - Real-time donor and recipient entry forms
 - Rule-based blood group compatibility scoring
 - Machine learning-assisted donor ranking
@@ -51,7 +51,8 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-3. Open the local Streamlit URL shown in the terminal and log in using a user stored in the SQLite database.
+3. Open the local Streamlit URL shown in the terminal.
+4. Register a new account from the app or log in with an existing SQLite-backed user account.
 
 ## Notes
 
