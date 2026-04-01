@@ -2,60 +2,71 @@
 
 ## Project Overview
 
-This project is a Python-based AI organ donor-recipient matching system built around a Streamlit interface. It combines rule-based compatibility scoring, machine learning ranking, and a lightweight SQLite-backed donor and recipient registry so users can add real-time entries and identify the best donor match for a selected recipient.
+This repository has been restructured into a Lovable-compatible full-stack app:
 
-The current implementation focuses on organ matching features such as donor age, recipient age, blood group compatibility, health score, urgency, and distance. A `RandomForestRegressor` is used to estimate match quality and support final donor ranking.
+- `client/` contains a Vite + React frontend
+- `server/` contains a FastAPI backend
+- `model/` contains the original ML and legacy Python app code
+- `data/` contains the original datasets
+
+The web app now includes a professional React dashboard, a FastAPI backend, and ML-aware matching logic. The frontend calls `POST /match`, the backend attempts to load a supported model artifact from `model/`, and it falls back to realistic generated match results if no runnable model file is available.
 
 ## Features
 
-- Streamlit dashboard for interactive donor-recipient matching
-- Secure login and registration flow backed by SQLite
-- Real-time donor and recipient entry forms
-- Rule-based blood group compatibility scoring
-- Machine learning-assisted donor ranking
-- Visual ranking display and score comparison chart
-- Modular project structure for preprocessing, modeling, evaluation, ranking, and rules
+- React frontend built with Vite
+- FastAPI backend with CORS enabled
+- Frontend-to-backend fetch flow via `VITE_API_URL`
+- Safe error handling in the frontend
+- Dynamic backend model loading for `.pkl`, `.h5`, and `.pt` files
+- Realistic fallback predictions when model inference is unavailable
+- Existing ML code preserved under `model/`
+- Existing datasets preserved under `data/`
 
 ## Tech Stack
 
+- React
+- Vite
+- FastAPI
+- Uvicorn
 - Python
-- Pandas
-- NumPy
-- scikit-learn
-- Streamlit
-- SQLite
-- Matplotlib
 
 ## Project Structure
 
-- `app.py`: Streamlit user interface
-- `database.py`: SQLite setup and CRUD helpers
-- `preprocessing.py`: dataset schema mapping and shared feature preparation
-- `rules.py`: compatibility and target scoring logic
-- `model.py`: model training pipeline
-- `evaluation.py`: evaluation metrics for kidney and heart datasets
-- `ranking.py`: candidate ranking logic
-- `data_generation.py`: synthetic dataset generator
+- `client/`: Lovable frontend entry
+- `server/`: API backend
+- `model/`: legacy ML code and scripts
+- `data/`: dataset files
 
-## How to Run the App
+## How to Run
 
-1. Install dependencies:
+### Backend
 
 ```powershell
+cd server
 pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
-2. Start the Streamlit app:
+### Frontend
 
 ```powershell
-streamlit run app.py
+cd client
+npm install
+npm run dev
 ```
 
-3. Open the local Streamlit URL shown in the terminal.
-4. Register a new account from the app or log in with an existing SQLite-backed user account.
+Environment configuration:
+
+`client/.env`
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+The frontend uses this variable when calling the backend.
 
 ## Notes
 
-- The kidney dataset is used as the training dataset.
-- The heart dataset is used for cross-organ generalization testing.
-- If GitHub authentication prompts for a password during push, use a GitHub Personal Access Token instead of your account password.
+- The ML code was preserved and moved into `model/` without being folded into the new web app.
+- The datasets were preserved and moved into `data/`.
+- If a supported saved model file is later added to `model/`, the backend will try to use it automatically.

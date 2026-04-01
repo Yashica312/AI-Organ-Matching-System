@@ -3,3 +3,6 @@ __pycache__/
 *.db
 .env
 .vscode/
+client/node_modules/
+client/dist/
+server/__pycache__/
