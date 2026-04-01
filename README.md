@@ -1,41 +1,41 @@
 # AI Organ Matching System
 
-## Project Overview
+## Project Description
 
-This repository has been restructured into a Lovable-compatible full-stack app:
+AI Organ Matching System is a full-stack healthcare decision-support demo built for donor-recipient ranking. It combines a polished React dashboard, a FastAPI backend, and an upgraded XGBoost-based matching engine to rank multiple donors, explain why the top donors were selected, and visualize the match results in a presentation-ready interface.
 
-- `client/` contains a Vite + React frontend
-- `server/` contains a FastAPI backend
-- `model/` contains the original ML and legacy Python app code
-- `data/` contains the original datasets
+The system is structured for Lovable preview and local development:
 
-The web app now includes a professional React dashboard, a FastAPI backend, and ML-aware matching logic. The frontend calls `POST /match`, the backend attempts to load a supported model artifact from `model/`, and it falls back to realistic generated match results if no runnable model file is available.
+- `client/` → React + Vite frontend
+- `server/` → FastAPI backend
+- `model/` → ML training code and saved model artifacts
+- `data/` → source datasets
 
 ## Features
 
-- React frontend built with Vite
-- FastAPI backend with CORS enabled
-- Frontend-to-backend fetch flow via `VITE_API_URL`
-- Safe error handling in the frontend
-- Dynamic backend model loading for `.pkl`, `.h5`, and `.pt` files
-- Realistic fallback predictions when model inference is unavailable
-- Existing ML code preserved under `model/`
-- Existing datasets preserved under `data/`
+- ML-based donor-recipient ranking using engineered transplant features
+- Multi-donor matching with Top 5 ranked donor results
+- Explainable AI output for each donor match
+- Demo Mode for stable presentations with preloaded realistic rankings
+- Live API mode for backend-driven ranking
+- Compatibility filtering and organ filtering
+- Ranked donor cards with visual highlighting for the top match
+- Match-score bar chart for quick comparison
+- Responsive dashboard layout for desktop and mobile
 
 ## Tech Stack
 
 - React
+- TypeScript
 - Vite
+- Tailwind CSS
 - FastAPI
-- Uvicorn
 - Python
-
-## Project Structure
-
-- `client/`: Lovable frontend entry
-- `server/`: API backend
-- `model/`: legacy ML code and scripts
-- `data/`: dataset files
+- XGBoost
+- scikit-learn
+- Pandas
+- NumPy
+- Joblib
 
 ## How to Run
 
@@ -55,7 +55,9 @@ npm install
 npm run dev
 ```
 
-Environment configuration:
+### Environment
+
+Create or update:
 
 `client/.env`
 
@@ -63,10 +65,9 @@ Environment configuration:
 VITE_API_URL=http://localhost:8000
 ```
 
-The frontend uses this variable when calling the backend.
-
 ## Notes
 
-- The ML code was preserved and moved into `model/` without being folded into the new web app.
-- The datasets were preserved and moved into `data/`.
-- If a supported saved model file is later added to `model/`, the backend will try to use it automatically.
+- The backend endpoint used by the polished dashboard is `POST /match-multiple`.
+- The frontend supports both live API calls and demo mode.
+- The XGBoost model artifact is saved to `model/xgb_model.pkl` when training runs.
+- Existing ML code and datasets are preserved under `model/` and `data/`.
