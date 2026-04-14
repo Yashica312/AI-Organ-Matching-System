@@ -25,7 +25,7 @@ from rules import compatibility_score
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
-app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="/static")
+app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
 
 init_db()
@@ -202,13 +202,14 @@ def health():
     return jsonify({"status": "ok"})
 
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve_react(path: str):
-    requested_path = STATIC_DIR / path
-    if path and requested_path.exists() and requested_path.is_file():
-        return send_from_directory(STATIC_DIR, path)
-    return send_from_directory(STATIC_DIR, "index.html")
+@app.route('/')
+def serve():
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory(app.static_folder, path)
 
 
 if __name__ == "__main__":
