@@ -1,9 +1,12 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import pandas as pd
 
@@ -18,6 +21,9 @@ from rules import compatibility_score
 from preprocessing import prepare_training_data
 
 app = FastAPI(title="AI Organ Matching API")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +34,14 @@ app.add_middleware(
 )
 
 init_db()
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "detail": exc.detail},
+    )
 
 
 class AuthRequest(BaseModel):
@@ -180,6 +194,35 @@ def model_insights():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+if STATIC_DIR.exists():
+    assets_dir = STATIC_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/favicon.ico")
+    def serve_favicon():
+        return FileResponse(STATIC_DIR / "favicon.ico")
+
+    @app.get("/placeholder.svg")
+    def serve_placeholder():
+        return FileResponse(STATIC_DIR / "placeholder.svg")
+
+    @app.get("/robots.txt")
+    def serve_robots():
+        return FileResponse(STATIC_DIR / "robots.txt")
+
+    @app.get("/")
+    def serve_frontend():
+        return FileResponse(TEMPLATES_DIR / "index.html")
+
+    @app.get("/{full_path:path}")
+    def serve_frontend_routes(full_path: str):
+        candidate = STATIC_DIR / full_path
+        if candidate.exists() and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(TEMPLATES_DIR / "index.html")
 
 
 if __name__ == "__main__":
