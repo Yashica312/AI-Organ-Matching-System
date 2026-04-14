@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.headless true --server.enableCORS false
+    startCommand: python api.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0

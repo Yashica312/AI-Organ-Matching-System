@@ -7,3 +7,7 @@ lightgbm
 shap
 joblib
 matplotlib
+fastapi
+uvicorn
+python-multipart
+pydantic
