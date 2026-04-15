@@ -16,7 +16,29 @@ const urgencyLabel = (value: number): Recipient["urgency"] => {
 
 const toPercent = (value: number) => (value <= 1 ? Math.round(value * 100) : Math.round(value));
 
-const mapRecipient = (recipient: any): Recipient => ({
+type ApiRecipient = {
+  id: number;
+  recipient_name: string;
+  recipient_age: number | string;
+  recipient_bg: string;
+  required_organ: string;
+  urgency_score: number | string;
+  location?: string | null;
+};
+
+type ApiDonorMatch = {
+  donor_name?: string;
+  donor_age?: number | string;
+  donor_bg?: string;
+  donor_organ?: string;
+  health_score?: number | string | null;
+  distance?: number | string;
+  predicted_score?: number | string | null;
+  blood_compat_score?: number | string | null;
+  age_diff?: number | string | null;
+};
+
+const mapRecipient = (recipient: ApiRecipient): Recipient => ({
   id: recipient.id,
   name: recipient.recipient_name,
   age: Number(recipient.recipient_age),
@@ -28,19 +50,19 @@ const mapRecipient = (recipient: any): Recipient => ({
   waitTime: 0,
 });
 
-const mapDonor = (donor: any, index: number): Donor => ({
+const mapDonor = (donor: ApiDonorMatch, index: number): Donor => ({
   id: index + 1,
-  name: donor.donor_name,
+  name: donor.donor_name ?? "Unknown",
   age: Number(donor.donor_age),
-  bloodGroup: donor.donor_bg,
-  organ: donor.donor_organ,
+  bloodGroup: donor.donor_bg ?? "Unknown",
+  organ: donor.donor_organ ?? "Unknown",
   hlaMatch: Math.round(Number(donor.health_score ?? 0) * 100),
   location: donor.distance !== undefined ? `${donor.distance} km` : "Unknown",
   waitTime: 0,
   score: toPercent(Number(donor.predicted_score ?? 0)),
 });
 
-const buildExplanation = (donor: any) => {
+const buildExplanation = (donor: ApiDonorMatch) => {
   const reasons: string[] = [];
   if (Number(donor.blood_compat_score) === 1) reasons.push("Blood match");
   if (Number(donor.health_score ?? 0) >= 0.8) reasons.push("Strong donor health profile");
@@ -64,8 +86,9 @@ const Matching = () => {
       .then(async (res) => {
         if (!res.ok) throw new Error("Failed to fetch recipients");
         const data = await res.json();
-        const rows = Array.isArray(data?.data) ? data.data : [];
-        setRecipients(rows.map(mapRecipient));
+        const rows: unknown[] = Array.isArray(data?.data) ? data.data : [];
+        const safeRows = rows.filter((r): r is ApiRecipient => !!r && typeof r === "object" && "id" in r);
+        setRecipients(safeRows.map(mapRecipient));
       })
       .catch(() => setError("Failed to fetch recipients"));
   }, []);
