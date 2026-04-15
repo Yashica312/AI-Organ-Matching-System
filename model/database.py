@@ -73,7 +73,9 @@ def init_db():
 # =========================
 # USER FUNCTIONS
 # =========================
-def add_user(username, password):
+def add_user(username, password, confirm_password=None):
+    if confirm_password is not None and password != confirm_password:
+        raise ValueError("Passwords do not match")
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 

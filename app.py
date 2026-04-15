@@ -32,7 +32,14 @@ init_db()
 
 
 def json_error(message: str, status_code: int):
-    return jsonify({"success": False, "detail": message}), status_code
+    return jsonify({"success": False, "error": {"message": message}}), status_code
+
+
+def json_ok(data=None, message: str | None = None, status_code: int = 200):
+    payload = {"success": True, "data": data}
+    if message:
+        payload["message"] = message
+    return jsonify(payload), status_code
 
 
 @app.post("/api/register")
@@ -43,8 +50,8 @@ def register():
     if not username or not password:
         return json_error("Username and password are required", 400)
     try:
-        add_user(username, password)
-        return jsonify({"success": True, "message": "Account created"})
+        add_user(username, password, password)
+        return json_ok(data=None, message="Account created", status_code=201)
     except Exception as exc:
         return json_error(str(exc), 400)
 
@@ -55,16 +62,15 @@ def login():
     username = payload.get("username", "").strip()
     password = payload.get("password", "")
     if validate_user(username, password):
-        return jsonify({"success": True, "message": "Login successful"})
+        return json_ok(data={"username": username}, message="Login successful")
     return json_error("Invalid credentials", 401)
 
 
 @app.get("/api/donors")
 def donors():
     df = get_donors()
-    if df.empty:
-        return jsonify([])
-    return jsonify(df.to_dict(orient="records"))
+    data = [] if df.empty else df.to_dict(orient="records")
+    return json_ok(data=data)
 
 
 @app.post("/api/donors")
@@ -79,7 +85,7 @@ def create_donor():
             float(payload["health_score"]),
             float(payload["distance"]),
         )
-        return jsonify({"success": True, "message": "Donor added"})
+        return json_ok(data=None, message="Donor added", status_code=201)
     except Exception as exc:
         return json_error(str(exc), 400)
 
@@ -87,9 +93,8 @@ def create_donor():
 @app.get("/api/recipients")
 def recipients():
     df = get_recipients()
-    if df.empty:
-        return jsonify([])
-    return jsonify(df.to_dict(orient="records"))
+    data = [] if df.empty else df.to_dict(orient="records")
+    return json_ok(data=data)
 
 
 @app.post("/api/recipients")
@@ -103,7 +108,7 @@ def create_recipient():
             payload["organ"],
             int(payload["urgency_score"]),
         )
-        return jsonify({"success": True, "message": "Recipient added"})
+        return json_ok(data=None, message="Recipient added", status_code=201)
     except Exception as exc:
         return json_error(str(exc), 400)
 
@@ -147,12 +152,12 @@ def match():
     pairs = pairs[pairs["donor_organ"].str.lower() == str(selected["required_organ"]).lower()].copy()
 
     if pairs.empty:
-        return jsonify({"matches": [], "message": "No donors found for this organ type"})
+        return json_ok(data={"matches": []}, message="No donors found for this organ type")
 
     ranked = rank_recipients(pairs, top_n=10, model=artifacts.estimator)
 
     if ranked.empty:
-        return jsonify({"matches": [], "message": "No blood-compatible donors found"})
+        return json_ok(data={"matches": []}, message="No blood-compatible donors found")
 
     result_cols = [
         "donor_name",
@@ -166,8 +171,8 @@ def match():
         "predicted_score",
     ]
     available = [column for column in result_cols if column in ranked.columns]
-    return jsonify(
-        {
+    return json_ok(
+        data={
             "matches": ranked[available].to_dict(orient="records"),
             "best_match": ranked.iloc[0][available].to_dict(),
         }
@@ -176,25 +181,7 @@ def match():
 
 @app.get("/api/model/insights")
 def model_insights():
-    donors_df = get_donors()
-    if donors_df.empty:
-        return json_error("No donor data to train on", 400)
-
-    train_df = prepare_training_data(donors_df)
-    artifacts = train_model(train_df)
-    importances = {}
-    if hasattr(artifacts.estimator, "feature_importances_"):
-        importances = dict(
-            zip(artifacts.feature_names, artifacts.estimator.feature_importances_.tolist())
-        )
-
-    return jsonify(
-        {
-            "cv_r2_mean": round(artifacts.cv_r2_mean, 3),
-            "holdout_rmse": round(artifacts.holdout_rmse, 3),
-            "feature_importances": importances,
-        }
-    )
+    return json_error("Model insights endpoint disabled", 404)
 
 
 @app.get("/health")

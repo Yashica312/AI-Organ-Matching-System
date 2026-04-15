@@ -1,9 +1,5 @@
-fastapi
-uvicorn
 joblib
 scikit-learn
 numpy
 pandas
-torch
 xgboost
-shap
