@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const organs = ["Kidney", "Liver", "Heart", "Lungs", "Pancreas"];
@@ -45,14 +44,21 @@ const AddDonor = () => {
     }
     setLoading(true);
     try {
-      await api.addDonor({
-        name: form.name,
-        age: Number(form.age),
-        blood_group: form.bloodGroup,
-        organ: normalizeOrgan(form.organ),
-        health_score: Number((form.healthScore[0] / 100).toFixed(2)),
-        distance: Number(form.distance[0]),
+      const baseUrl = import.meta.env.VITE_API_URL || "https://ai-organ-matching-system.onrender.com";
+      const res = await fetch(`${baseUrl}/api/donors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          donor_name: form.name,
+          donor_age: Number(form.age),
+          donor_bg: form.bloodGroup,
+          donor_organ: normalizeOrgan(form.organ),
+          health_score: Number(form.healthScore[0]),
+          distance: Number(form.distance[0]),
+          location: form.location || "",
+        }),
       });
+      if (!res.ok) throw new Error("Failed to add donor");
       toast({
         title: "Donor Registered",
         description: `${form.name} has been added. Go to Matching to see updated results.`,

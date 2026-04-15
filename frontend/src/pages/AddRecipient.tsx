@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const organs = ["Kidney", "Liver", "Heart", "Lungs", "Pancreas"];
@@ -47,13 +46,20 @@ const AddRecipient = () => {
     }
     setLoading(true);
     try {
-      await api.addRecipient({
-        name: form.name,
-        age: Number(form.age),
-        blood_group: form.bloodGroup,
-        organ: normalizeOrgan(form.organ),
-        urgency_score: Number(form.urgency[0]),
+      const baseUrl = import.meta.env.VITE_API_URL || "https://ai-organ-matching-system.onrender.com";
+      const res = await fetch(`${baseUrl}/api/recipients`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient_name: form.name,
+          recipient_age: Number(form.age),
+          recipient_bg: form.bloodGroup,
+          required_organ: normalizeOrgan(form.organ),
+          urgency_score: Number(form.urgency[0]),
+          location: form.location || "",
+        }),
       });
+      if (!res.ok) throw new Error("Failed to add recipient");
       toast({
         title: "Recipient Registered",
         description: `${form.name} has been added to the waitlist. Go to Matching to find donors.`,
