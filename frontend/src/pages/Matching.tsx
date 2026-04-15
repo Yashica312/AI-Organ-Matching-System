@@ -6,7 +6,6 @@ import { TopMatchCard } from "@/components/TopMatchCard";
 import { RecipientDetailCard } from "@/components/RecipientDetailCard";
 import { DonorRankingTable } from "@/components/DonorRankingTable";
 import { MatchChart } from "@/components/MatchChart";
-import { api } from "@/lib/api";
 
 const urgencyLabel = (value: number): Recipient["urgency"] => {
   if (value >= 8) return "Critical";
@@ -25,7 +24,7 @@ const mapRecipient = (recipient: any): Recipient => ({
   organ: recipient.required_organ,
   urgency: urgencyLabel(Number(recipient.urgency_score)),
   hlaType: "N/A",
-  location: "Unknown",
+  location: recipient.location || "Unknown",
   waitTime: 0,
 });
 
@@ -60,8 +59,14 @@ const Matching = () => {
   const [topExplanation, setTopExplanation] = useState("");
 
   useEffect(() => {
-    api.getRecipients()
-      .then((data) => setRecipients(data.map(mapRecipient)))
+    const baseUrl = import.meta.env.VITE_API_URL || "https://ai-organ-matching-system.onrender.com";
+    fetch(`${baseUrl}/api/recipients`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to fetch recipients");
+        const data = await res.json();
+        const rows = Array.isArray(data?.data) ? data.data : [];
+        setRecipients(rows.map(mapRecipient));
+      })
       .catch(() => setError("Failed to fetch recipients"));
   }, []);
 
@@ -74,12 +79,19 @@ const Matching = () => {
     setLoading(true);
     setError("");
     try {
-      const result = await api.getMatch(recipientId);
-      const mappedMatches = Array.isArray(result.matches) ? result.matches.map(mapDonor) : [];
+      const baseUrl = import.meta.env.VITE_API_URL || "https://ai-organ-matching-system.onrender.com";
+      const res = await fetch(`${baseUrl}/api/match`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient_id: Number(recipientId) }),
+      });
+      if (!res.ok) throw new Error("Matching failed");
+      const result = await res.json();
+      const mappedMatches = Array.isArray(result?.matches) ? result.matches.map(mapDonor) : [];
       setMatches(mappedMatches);
-      setBestMatch(result.best_match ? mapDonor(result.best_match, 0) : null);
-      setTopExplanation(result.best_match ? buildExplanation(result.best_match) : "");
-      if (result.message && mappedMatches.length === 0) {
+      setBestMatch(result?.best_match ? mapDonor(result.best_match, 0) : null);
+      setTopExplanation(result?.best_match ? buildExplanation(result.best_match) : "");
+      if (result?.message && mappedMatches.length === 0) {
         setError(result.message);
       }
     } catch (err) {
